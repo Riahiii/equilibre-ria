@@ -11,7 +11,9 @@ st.set_page_config(
 
 # --- MENU DANS LA BARRE LATÉRALE ---
 st.sidebar.title("Navigation")
-mode = st.sidebar.radio("Choisissez le mode :", ["Consommateur", "Producteur"])import streamlit as st
+mode = st.sidebar.radio("Choisissez le mode :", ["Consommateur", "Producteur"])
+Riahi
+import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
