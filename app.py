@@ -1,463 +1,199 @@
+
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
 # --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(
-    page_title="Économie Micro — RIAHI",
+    page_title="Économie Micro — RIAHI", 
     page_icon="📊",
     layout="wide"
 )
 
-# --- SIGNATURE EN SIDEBAR ---
-st.sidebar.markdown("## 📊 Économie Micro")
-st.sidebar.caption("Pr. RIAHI · Microéconomie L1")
-st.sidebar.markdown("---")
-
-# --- MENU ---
-mode = st.sidebar.radio(
-    "Choisissez le mode :",
-    ["Consommateur", "Producteur"],
-    key="choix_mode"
-)
-
-st.sidebar.markdown("---")
-
-
-# ==========================================
-# FONCTION UTILITAIRE : légende propre
-# ==========================================
-def clean_legend(ax, two_eq=False):
-    """Place la légende de façon lisible."""
-    handles, labels = ax.get_legend_handles_labels()
-    if handles:
-        ax.legend(
-            handles, labels,
-            loc='upper right',
-            fontsize=8,
-            ncol=2 if two_eq else 1,
-            framealpha=0.9
-        )
-
+# --- MENU DANS LA BARRE LATÉRALE ---
+st.sidebar.title("Navigation")
+mode = st.sidebar.radio("Choisissez le mode :", ["Consommateur", "Producteur"], key="choix_mode")
 
 # ==========================================
 # MODE CONSOMMATEUR
 # ==========================================
 if mode == "Consommateur":
-
     st.title("📈 Équilibre du Consommateur — RIAHI")
-    st.markdown(
-        "Ajustez les paramètres dans la barre latérale pour visualiser "
-        "l'équilibre du consommateur (modèle Cobb-Douglas)."
-    )
+    st.markdown("Ajustez les paramètres pour voir l'équilibre du consommateur.")
 
-    # --- PARAMÈTRES EQ 1 ---
     st.sidebar.header("⚙️ Paramètres (Équilibre 1)")
-    income = st.sidebar.slider("Revenu (R)", 10, 200, 100, 10, key="inc1")
-    px = st.sidebar.slider("Prix du bien X (Px)", 1, 20, 4, 1, key="px1")
-    py = st.sidebar.slider("Prix du bien Y (Py)", 1, 20, 5, 1, key="py1")
-    alpha = st.sidebar.slider("Alpha (poids du bien X)", 0.1, 0.9, 0.5, 0.1, key="alpha1")
+    income = st.sidebar.slider("Revenu (R)", min_value=10, max_value=200, value=100, step=10, key="inc1")
+    px = st.sidebar.slider("Prix du bien X (Px)", min_value=1, max_value=20, value=4, step=1, key="px1")
+    py = st.sidebar.slider("Prix du bien Y (Py)", min_value=1, max_value=20, value=5, step=1, key="py1")
+    alpha = st.sidebar.slider("Alpha (poids du bien X)", min_value=0.1, max_value=0.9, value=0.5, step=0.1, key="alpha1")
     beta = 1 - alpha
 
-    # --- EQ 2 ---
+    # --- OPTION POUR LE 2EME ÉQUILIBRE ---
     st.sidebar.markdown("---")
     st.sidebar.header("🔄 Comparaison (Équilibre 2)")
-    show_eq2 = st.sidebar.checkbox("Afficher un 2ème équilibre", value=False, key="eq2_cons")
-
-    if show_eq2:
-        income2 = st.sidebar.slider("Revenu 2 (R2)", 10, 200, 150, 10, key="inc2")
-        px2 = st.sidebar.slider("Prix du bien X 2 (Px2)", 1, 20, 6, 1, key="px2")
-        py2 = st.sidebar.slider("Prix du bien Y 2 (Py2)", 1, 20, 5, 1, key="py2")
-    else:
-        income2 = px2 = py2 = None
+    show_eq2_cons = st.sidebar.checkbox("Afficher un 2ème équilibre", value=False)
+    
+    if show_eq2_cons:
+        income2 = st.sidebar.slider("Revenu 2 (R2)", min_value=10, max_value=200, value=150, step=10, key="inc2")
+        px2 = st.sidebar.slider("Prix du bien X 2 (Px2)", min_value=1, max_value=20, value=6, step=1, key="px2")
+        py2 = st.sidebar.slider("Prix du bien Y 2 (Py2)", min_value=1, max_value=20, value=5, step=1, key="py2")
 
     # --- OPTIONS D'AFFICHAGE ---
     st.sidebar.markdown("---")
     st.sidebar.header("👁️ Options d'affichage")
-    show_budget = st.sidebar.checkbox("Contrainte Budgétaire", value=True)
-    show_indiff = st.sidebar.checkbox("Courbes d'Indifférence", value=True)
-    show_eq_pt  = st.sidebar.checkbox("Point d'équilibre", value=True)
+    show_budget = st.sidebar.checkbox("Afficher la Contrainte Budgétaire", value=True)
+    show_indiff = st.sidebar.checkbox("Afficher les Courbes d'Indifférence", value=True)
+    show_eq = st.sidebar.checkbox("Afficher le point d'équilibre", value=True)
 
-    # --- GARDE-FOU ---
-    if not (show_budget or show_indiff or show_eq_pt):
-        st.warning("⚠️ Activez au moins une couche d'affichage dans la barre latérale.")
-        st.stop()
+    # Calculs Eq 1
+    def utility(x, y, a, b):
+        return (x**a) * (y**b)
 
-    # --- CALCULS EQ 1 ---
-    x_eq = alpha * income / px
-    y_eq = beta  * income / py
-    u_eq = (x_eq * alpha) * (y_eq * beta)
+    x_eq = (alpha / (alpha + beta)) * (income / px)
+    y_eq = (beta / (alpha + beta)) * (income / py)
+    u_eq = utility(x_eq, y_eq, alpha, beta)
 
-    # --- CALCULS EQ 2 ---
-    if show_eq2:
-        x_eq2 = alpha * income2 / px2
-        y_eq2 = beta  * income2 / py2
-        u_eq2 = (x_eq2 * alpha) * (y_eq2 * beta)
+    # Calculs Eq 2
+    if show_eq2_cons:
+        x_eq2 = (alpha / (alpha + beta)) * (income2 / px2)
+        y_eq2 = (beta / (alpha + beta)) * (income2 / py2)
+        u_eq2 = utility(x_eq2, y_eq2, alpha, beta)
 
-    # ======================================
-    # GRAPHIQUES SÉPARÉS
-    # ======================================
-    st.subheader("🎨 Construction progressive du graphique")
+    # Graphique
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    # --- TRACÉ EQUILIBRE 1 (Bleu / Rouge) ---
+    if show_budget:
+        x_budget = np.linspace(0, income/px, 100)
+        y_budget = (income - px * x_budget) / py
+        ax.plot(x_budget, y_budget, color='blue', linewidth=2, label='Contrainte Budgétaire 1')
 
-    max_x = max(income / px, income2 / px2 if show_eq2 else 0) * 1.25
-    max_y = max(income / py, income2 / py2 if show_eq2 else 0) * 1.25
+    if show_indiff:
+        x_vals = np.linspace(0.1, income/px + 5, 400)
+        y_vals = (u_eq / (x_vals**alpha))**(1/beta)
+        mask = (y_vals > 0) & (y_vals < income/py + 5)
+        ax.plot(x_vals[mask], y_vals[mask], color='red', linewidth=2, label='Courbe d\'Indifférence 1')
 
-    def setup_ax(ax, title):
-        ax.set_title(title, fontsize=11, fontweight='bold')
-        ax.set_xlabel('Bien X')
-        ax.set_ylabel('Bien Y')
-        ax.set_xlim(0, max_x)
-        ax.set_ylim(0, max_y)
-        ax.grid(True, linestyle=':', alpha=0.6)
-        ax.axhline(0, color='black', linewidth=0.5)
-        ax.axvline(0, color='black', linewidth=0.5)
+    if show_eq:
+        ax.scatter(x_eq, y_eq, color='green', s=100, zorder=5, label=f'Équilibre 1 ({x_eq:.1f}, {y_eq:.1f})')
 
-    graphs = []
-    if show_budget:   graphs.append("budget")
-    if show_indiff:   graphs.append("indiff")
-    if show_eq_pt:    graphs.append("eq")
-
-    n_cols = 2
-    cols = st.columns(n_cols)
-
-    for idx, kind in enumerate(graphs):
-        col = cols[idx % n_cols]
-        with col:
-            fig, ax = plt.subplots(figsize=(6, 4.5))
-
-            if kind == "budget":
-                x_b = np.linspace(0, income / px, 200)
-                y_b = (income - px * x_b) / py
-                ax.plot(x_b, y_b, color='blue', linewidth=2.5, label='Contrainte Budgétaire 1')
-                ax.fill_between(x_b, 0, y_b, alpha=0.10, color='blue')
-
-                if show_eq2:
-                    x_b2 = np.linspace(0, income2 / px2, 200)
-                    y_b2 = (income2 - px2 * x_b2) / py2
-                    ax.plot(x_b2, y_b2, color='orange', linestyle='--', linewidth=2, label='Contrainte Budgétaire 2')
-                    ax.fill_between(x_b2, 0, y_b2, alpha=0.08, color='orange')
-
-                ax.legend(loc='best', fontsize=8)
-                setup_ax(ax, "① Contrainte Budgétaire")
-
-            elif kind == "indiff":
-                x_start = max(0.01, min(0.1, x_eq / 2))
-                x_v = np.linspace(x_start, income / px * 1.3, 400)
-                with np.errstate(divide='ignore', invalid='ignore'):
-                    y_v = (u_eq / (x_v * alpha)) * (1 / beta)
-                mask = np.isfinite(y_v) & (y_v > 0)
-                ax.plot(x_v[mask], y_v[mask], color='red', linewidth=2.5, label="Courbe d'Indifférence 1")
-
-                if show_eq2:
-                    x_start2 = max(0.01, min(0.1, x_eq2 / 2))
-                    x_v2 = np.linspace(x_start2, income2 / px2 * 1.3, 400)
-                    with np.errstate(divide='ignore', invalid='ignore'):
-                        y_v2 = (u_eq2 / (x_v2 * alpha)) * (1 / beta)
-                    mask2 = np.isfinite(y_v2) & (y_v2 > 0)
-                    ax.plot(x_v2[mask2], y_v2[mask2], color='purple', linestyle='--', linewidth=2, label="Courbe d'Indifférence 2")
-
-                ax.legend(loc='best', fontsize=8)
-                setup_ax(ax, "② Courbe d'Indifférence")
-
-            elif kind == "eq":
-                x_b = np.linspace(0, income / px, 200)
-                y_b = (income - px * x_b) / py
-                ax.plot(x_b, y_b, color='lightgray', linewidth=1.2, label='CB (contexte)')
-
-                x_start = max(0.01, min(0.1, x_eq / 2))
-                x_v = np.linspace(x_start, income / px * 1.3, 400)
-                with np.errstate(divide='ignore', invalid='ignore'):
-                    y_v = (u_eq / (x_v * alpha)) * (1 / beta)
-                mask = np.isfinite(y_v) & (y_v > 0)
-                ax.plot(x_v[mask], y_v[mask], color='mistyrose', linewidth=1.2, label='CI (contexte)')
-
-                ax.scatter(x_eq, y_eq, color='green', s=180, zorder=5, edgecolor='black', label=f'E1 ({x_eq:.1f}, {y_eq:.1f})')
-                ax.annotate("E1", (x_eq, y_eq), xytext=(10, 10), textcoords="offset points", fontsize=11, color='darkgreen', fontweight='bold')
-
-                if show_eq2:
-                    ax.scatter(x_eq2, y_eq2, color='darkorange', s=180, zorder=5, edgecolor='black', label=f'E2 ({x_eq2:.1f}, {y_eq2:.1f})')
-                    ax.annotate("E2", (x_eq2, y_eq2), xytext=(10, 10), textcoords="offset points", fontsize=11, color='darkorange', fontweight='bold')
-
-                ax.legend(loc='best', fontsize=8)
-                setup_ax(ax, "③ Point d'Équilibre")
-
-            st.pyplot(fig)
-            plt.close(fig)
-
-    # --- VUE COMBINÉE ---
-    with st.expander("🔎 Voir la vue combinée (toutes les couches superposées)"):
-        fig_c, ax_c = plt.subplots(figsize=(10, 6))
-
+    # --- TRACÉ EQUILIBRE 2 (Orange / Violet) ---
+    if show_eq2_cons:
         if show_budget:
-            x_b = np.linspace(0, income / px, 200)
-            y_b = (income - px * x_b) / py
-            ax_c.plot(x_b, y_b, color='blue', linewidth=2, label='Contrainte Budgétaire 1')
-            ax_c.fill_between(x_b, 0, y_b, alpha=0.08, color='blue')
-            if show_eq2:
-                x_b2 = np.linspace(0, income2 / px2, 200)
-                y_b2 = (income2 - px2 * x_b2) / py2
-                ax_c.plot(x_b2, y_b2, color='orange', linestyle='--', linewidth=2, label='Contrainte Budgétaire 2')
+            x_budget2 = np.linspace(0, income2/px2, 100)
+            y_budget2 = (income2 - px2 * x_budget2) / py2
+            ax.plot(x_budget2, y_budget2, color='orange', linewidth=2, linestyle='--', label='Contrainte Budgétaire 2')
 
         if show_indiff:
-            x_start = max(0.01, min(0.1, x_eq / 2))
-            x_v = np.linspace(x_start, income / px * 1.3, 400)
-            with np.errstate(divide='ignore', invalid='ignore'):
-                y_v = (u_eq / (x_v * alpha)) * (1 / beta)
-            mask = np.isfinite(y_v) & (y_v > 0)
-            ax_c.plot(x_v[mask], y_v[mask], color='red', linewidth=2, label="Courbe d'Indifférence 1")
-            if show_eq2:
-                x_start2 = max(0.01, min(0.1, x_eq2 / 2))
-                x_v2 = np.linspace(x_start2, income2 / px2 * 1.3, 400)
-                with np.errstate(divide='ignore', invalid='ignore'):
-                    y_v2 = (u_eq2 / (x_v2 * alpha)) * (1 / beta)
-                mask2 = np.isfinite(y_v2) & (y_v2 > 0)
-                ax_c.plot(x_v2[mask2], y_v2[mask2], color='purple', linestyle='--', linewidth=2, label="Courbe d'Indifférence 2")
+            x_vals2 = np.linspace(0.1, income2/px2 + 5, 400)
+            y_vals2 = (u_eq2 / (x_vals2**alpha))**(1/beta)
+            mask2 = (y_vals2 > 0) & (y_vals2 < income2/py2 + 5)
+            ax.plot(x_vals2[mask2], y_vals2[mask2], color='purple', linewidth=2, linestyle='--', label='Courbe d\'Indifférence 2')
 
-        if show_eq_pt:
-            ax_c.scatter(x_eq, y_eq, color='green', s=150, zorder=5, edgecolor='black', label=f'E1 ({x_eq:.1f}, {y_eq:.1f})')
-            if show_eq2:
-                ax_c.scatter(x_eq2, y_eq2, color='darkorange', s=150, zorder=5, edgecolor='black', label=f'E2 ({x_eq2:.1f}, {y_eq2:.1f})')
+        if show_eq:
+            ax.scatter(x_eq2, y_eq2, color='darkorange', s=100, zorder=5, label=f'Équilibre 2 ({x_eq2:.1f}, {y_eq2:.1f})')
 
-        setup_ax(ax_c, "Vue combinée — Équilibre du Consommateur")
-        ax_c.legend(loc='upper right', fontsize=8, ncol=2 if show_eq2 else 1)
-        st.pyplot(fig_c)
-        plt.close(fig_c)
-
-    # ======================================
-    # RÉSULTATS
-    # ======================================
-    st.subheader("📌 Résultats — Équilibre 1")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("X* (Bien X)", f"{x_eq:.2f}")
-    c2.metric("Y* (Bien Y)", f"{y_eq:.2f}")
-    c3.metric("Utilité U*", f"{u_eq:.3f}")
-
-    if show_eq2:
-        st.subheader("📌 Résultats — Équilibre 2")
-        c1, c2, c3 = st.columns(3)
-        c1.metric("X*₂", f"{x_eq2:.2f}", delta=f"{x_eq2 - x_eq:+.2f}")
-        c2.metric("Y*₂", f"{y_eq2:.2f}", delta=f"{y_eq2 - y_eq:+.2f}")
-        c3.metric("U*₂", f"{u_eq2:.3f}", delta=f"{u_eq2 - u_eq:+.3f}")
-
-    st.info(
-        "💡 *Condition d'optimalité (Cobb-Douglas)* : à l'équilibre, le TMS égale le rapport des prix.\n\n"
-        f"*X\\ = α · R/Px = {alpha:.1f} × {income}/{px} = {x_eq:.2f}**  \n"
-        f"*Y\\ = (1−α) · R/Py = {beta:.1f} × {income}/{py} = {y_eq:.2f}**"
-    )
-
-    with st.expander("📖 Voir les formules utilisées"):
-        st.latex(r"U(X,Y) = X^\alpha \, Y^\beta, \quad \beta = 1-\alpha")
-        st.latex(r"X^* = \frac{\alpha}{\alpha+\beta} \cdot \frac{R}{P_x}")
-        st.latex(r"Y^* = \frac{\beta}{\alpha+\beta} \cdot \frac{R}{P_y}")
-        st.latex(r"U^* = (X^*)^\alpha \, (Y^*)^\beta")
+    ax.set_xlabel('Bien X')
+    ax.set_ylabel('Bien Y')
+    
+    # Ajustement automatique des limites du graphique pour tout voir
+    max_x = max(income/px, income2/px2) + 5 if show_eq2_cons else income/px + 5
+    max_y = max(income/py, income2/py2) + 5 if show_eq2_cons else income/py + 5
+    ax.set_xlim(0, max_x)
+    ax.set_ylim(0, max_y)
+    
+    ax.legend()
+    ax.grid(True, linestyle=':', alpha=0.6)
+    st.pyplot(fig)
 
 
 # ==========================================
 # MODE PRODUCTEUR
 # ==========================================
 else:
-
     st.title("🏭 Équilibre du Producteur (Cobb-Douglas) — RIAHI")
-    st.markdown(
-        "Ajustez les paramètres pour visualiser la minimisation des coûts du producteur."
-    )
+    st.markdown("Ajustez les paramètres pour voir l'équilibre du producteur (minimisation des coûts).")
 
     st.sidebar.header("⚙️ Paramètres (Équilibre 1)")
-    cost = st.sidebar.slider("Coût total (C)", 10, 200, 100, 10, key="cost1")
-    w = st.sidebar.slider("Salaire (w)", 1, 20, 4, 1, key="w1")
-    r = st.sidebar.slider("Taux de location (r)", 1, 20, 5, 1, key="r1")
-    alpha_p = st.sidebar.slider("Alpha (poids du travail L)", 0.1, 0.9, 0.5, 0.1, key="alpha_p")
-    beta_p = 1 - alpha_p
+    cost = st.sidebar.slider("Coût total (C)", min_value=10, max_value=200, value=100, step=10, key="cost1")
+    w = st.sidebar.slider("Salaire (w)", min_value=1, max_value=20, value=4, step=1, key="w1")
+    r = st.sidebar.slider("Taux de location (r)", min_value=1, max_value=20, value=5, step=1, key="r1")
+    alpha_prod = st.sidebar.slider("Alpha (poids du travail L)", min_value=0.1, max_value=0.9, value=0.5, step=0.1, key="alpha1_prod")
+    beta_prod = 1 - alpha_prod
 
+    # --- OPTION POUR LE 2EME ÉQUILIBRE ---
     st.sidebar.markdown("---")
     st.sidebar.header("🔄 Comparaison (Équilibre 2)")
-    show_eq2 = st.sidebar.checkbox("Afficher un 2ème équilibre", value=False, key="eq2_prod")
+    show_eq2_prod = st.sidebar.checkbox("Afficher un 2ème équilibre", value=False)
+    
+    if show_eq2_prod:
+        cost2 = st.sidebar.slider("Coût total 2 (C2)", min_value=10, max_value=200, value=150, step=10, key="cost2")
+        w2 = st.sidebar.slider("Salaire 2 (w2)", min_value=1, max_value=20, value=6, step=1, key="w2")
+        r2 = st.sidebar.slider("Taux de location 2 (r2)", min_value=1, max_value=20, value=5, step=1, key="r2")
 
-    if show_eq2:
-        cost2 = st.sidebar.slider("Coût total 2 (C2)", 10, 200, 150, 10, key="cost2")
-        w2 = st.sidebar.slider("Salaire 2 (w2)", 1, 20, 6, 1, key="w2")
-        r2 = st.sidebar.slider("Taux de location 2 (r2)", 1, 20, 5, 1, key="r2")
-    else:
-        cost2 = w2 = r2 = None
-
+    # --- OPTIONS D'AFFICHAGE ---
     st.sidebar.markdown("---")
     st.sidebar.header("👁️ Options d'affichage")
-    show_isocost   = st.sidebar.checkbox("Droites d'Isocoût", value=True)
-    show_isoquant  = st.sidebar.checkbox("Isoquantes", value=True)
-    show_eq_pt     = st.sidebar.checkbox("Point d'équilibre", value=True)
+    show_isocost = st.sidebar.checkbox("Afficher les Droites d'Isocoût", value=True)
+    show_isoquant = st.sidebar.checkbox("Afficher les Isoquantes", value=True)
+    show_eq_prod = st.sidebar.checkbox("Afficher le point d'équilibre", value=True)
 
-    if not (show_isocost or show_isoquant or show_eq_pt):
-        st.warning("⚠️ Activez au moins une couche d'affichage dans la barre latérale.")
-        st.stop()
+    # Calculs Eq 1
+    def production(L, K, a, b):
+        return (L**a) * (K**b)
 
-    L_eq = alpha_p * cost / w
-    K_eq = beta_p  * cost / r
-    Q_eq = (L_eq * alpha_p) * (K_eq * beta_p)
+    L_eq = (alpha_prod / (alpha_prod + beta_prod)) * (cost / w)
+    K_eq = (beta_prod / (alpha_prod + beta_prod)) * (cost / r)
+    Q_eq = production(L_eq, K_eq, alpha_prod, beta_prod)
 
-    if show_eq2:
-        L_eq2 = alpha_p * cost2 / w2
-        K_eq2 = beta_p  * cost2 / r2
-        Q_eq2 = (L_eq2 * alpha_p) * (K_eq2 * beta_p)
+    # Calculs Eq 2
+    if show_eq2_prod:
+        L_eq2 = (alpha_prod / (alpha_prod + beta_prod)) * (cost2 / w2)
+        K_eq2 = (beta_prod / (alpha_prod + beta_prod)) * (cost2 / r2)
+        Q_eq2 = production(L_eq2, K_eq2, alpha_prod, beta_prod)
 
-    # ======================================
-    # GRAPHIQUES SÉPARÉS
-    # ======================================
-    st.subheader("🎨 Construction progressive du graphique")
+    # Graphique
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    # --- TRACÉ EQUILIBRE 1 (Bleu / Rouge) ---
+    if show_isocost:
+        L_isocost = np.linspace(0, cost/w, 100)
+        K_isocost = (cost - w * L_isocost) / r
+        ax.plot(L_isocost, K_isocost, color='blue', linewidth=2, label='Isocoût 1')
 
-    max_L = max(cost / w, cost2 / w2 if show_eq2 else 0) * 1.25
-    max_K = max(cost / r, cost2 / r2 if show_eq2 else 0) * 1.25
+    if show_isoquant:
+        L_vals = np.linspace(0.1, cost/w + 5, 400)
+        K_vals = (Q_eq / (L_vals**alpha_prod))**(1/beta_prod)
+        mask = (K_vals > 0) & (K_vals < cost/r + 5)
+        ax.plot(L_vals[mask], K_vals[mask], color='red', linewidth=2, label='Isoquante 1')
 
-    def setup_ax_prod(ax, title):
-        ax.set_title(title, fontsize=11, fontweight='bold')
-        ax.set_xlabel('Travail (L)')
-        ax.set_ylabel('Capital (K)')
-        ax.set_xlim(0, max_L)
-        ax.set_ylim(0, max_K)
-        ax.grid(True, linestyle=':', alpha=0.6)
-        ax.axhline(0, color='black', linewidth=0.5)
-        ax.axvline(0, color='black', linewidth=0.5)
+    if show_eq_prod:
+        ax.scatter(L_eq, K_eq, color='green', s=100, zorder=5, label=f'Équilibre 1 (L={L_eq:.1f}, K={K_eq:.1f})')
 
-    graphs = []
-    if show_isocost:   graphs.append("isocost")
-    if show_isoquant:  graphs.append("isoquant")
-    if show_eq_pt:     graphs.append("eq")
-
-    n_cols = 2
-    cols = st.columns(n_cols)
-
-    for idx, kind in enumerate(graphs):
-        col = cols[idx % n_cols]
-        with col:
-            fig, ax = plt.subplots(figsize=(6, 4.5))
-
-            if kind == "isocost":
-                L_iso = np.linspace(0, cost / w, 200)
-                K_iso = (cost - w * L_iso) / r
-                ax.plot(L_iso, K_iso, color='blue', linewidth=2.5, label='Isocoût 1')
-                ax.fill_between(L_iso, 0, K_iso, alpha=0.10, color='blue')
-
-                if show_eq2:
-                    L_iso2 = np.linspace(0, cost2 / w2, 200)
-                    K_iso2 = (cost2 - w2 * L_iso2) / r2
-                    ax.plot(L_iso2, K_iso2, color='orange', linestyle='--', linewidth=2, label='Isocoût 2')
-                    ax.fill_between(L_iso2, 0, K_iso2, alpha=0.08, color='orange')
-
-                ax.legend(loc='best', fontsize=8)
-                setup_ax_prod(ax, "① Droite d'Isocoût")
-
-            elif kind == "isoquant":
-                L_start = max(0.01, min(0.1, L_eq / 2))
-                L_v = np.linspace(L_start, cost / w * 1.3, 400)
-                with np.errstate(divide='ignore', invalid='ignore'):
-                    K_v = (Q_eq / (L_v * alpha_p)) * (1 / beta_p)
-                mask = np.isfinite(K_v) & (K_v > 0)
-                ax.plot(L_v[mask], K_v[mask], color='red', linewidth=2.5, label='Isoquante 1')
-
-                if show_eq2:
-                    L_start2 = max(0.01, min(0.1, L_eq2 / 2))
-                    L_v2 = np.linspace(L_start2, cost2 / w2 * 1.3, 400)
-                    with np.errstate(divide='ignore', invalid='ignore'):
-                        K_v2 = (Q_eq2 / (L_v2 * alpha_p)) * (1 / beta_p)
-                    mask2 = np.isfinite(K_v2) & (K_v2 > 0)
-                    ax.plot(L_v2[mask2], K_v2[mask2], color='purple', linestyle='--', linewidth=2, label='Isoquante 2')
-
-                ax.legend(loc='best', fontsize=8)
-                setup_ax_prod(ax, "② Isoquante")
-
-            elif kind == "eq":
-                L_iso = np.linspace(0, cost / w, 200)
-                K_iso = (cost - w * L_iso) / r
-                ax.plot(L_iso, K_iso, color='lightgray', linewidth=1.2, label='Isocoût (contexte)')
-
-                L_start = max(0.01, min(0.1, L_eq / 2))
-                L_v = np.linspace(L_start, cost / w * 1.3, 400)
-                with np.errstate(divide='ignore', invalid='ignore'):
-                    K_v = (Q_eq / (L_v * alpha_p)) * (1 / beta_p)
-                mask = np.isfinite(K_v) & (K_v > 0)
-                ax.plot(L_v[mask], K_v[mask], color='mistyrose', linewidth=1.2, label='Isoquante (contexte)')
-
-                ax.scatter(L_eq, K_eq, color='green', s=180, zorder=5, edgecolor='black', label=f'E1 (L={L_eq:.1f}, K={K_eq:.1f})')
-                ax.annotate("E1", (L_eq, K_eq), xytext=(10, 10), textcoords="offset points", fontsize=11, color='darkgreen', fontweight='bold')
-
-                if show_eq2:
-                    ax.scatter(L_eq2, K_eq2, color='darkorange', s=180, zorder=5, edgecolor='black', label=f'E2 (L={L_eq2:.1f}, K={K_eq2:.1f})')
-                    ax.annotate("E2", (L_eq2, K_eq2), xytext=(10, 10), textcoords="offset points", fontsize=11, color='darkorange', fontweight='bold')
-
-                ax.legend(loc='best', fontsize=8)
-                setup_ax_prod(ax, "③ Point d'Équilibre")
-
-            st.pyplot(fig)
-            plt.close(fig)
-
-    # --- VUE COMBINÉE ---
-    with st.expander("🔎 Voir la vue combinée (toutes les couches superposées)"):
-        fig_c, ax_c = plt.subplots(figsize=(10, 6))
-
+    # --- TRACÉ EQUILIBRE 2 (Orange / Violet) ---
+    if show_eq2_prod:
         if show_isocost:
-            L_iso = np.linspace(0, cost / w, 200)
-            K_iso = (cost - w * L_iso) / r
-            ax_c.plot(L_iso, K_iso, color='blue', linewidth=2, label='Isocoût 1')
-            ax_c.fill_between(L_iso, 0, K_iso, alpha=0.08, color='blue')
-            if show_eq2:
-                L_iso2 = np.linspace(0, cost2 / w2, 200)
-                K_iso2 = (cost2 - w2 * L_iso2) / r2
-                ax_c.plot(L_iso2, K_iso2, color='orange', linestyle='--', linewidth=2, label='Isocoût 2')
+            L_isocost2 = np.linspace(0, cost2/w2, 100)
+            K_isocost2 = (cost2 - w2 * L_isocost2) / r2
+            ax.plot(L_isocost2, K_isocost2, color='orange', linewidth=2, linestyle='--', label='Isocoût 2')
 
         if show_isoquant:
-            L_start = max(0.01, min(0.1, L_eq / 2))
-            L_v = np.linspace(L_start, cost / w * 1.3, 400)
-            with np.errstate(divide='ignore', invalid='ignore'):
-                K_v = (Q_eq / (L_v * alpha_p)) * (1 / beta_p)
-            mask = np.isfinite(K_v) & (K_v > 0)
-            ax_c.plot(L_v[mask], K_v[mask], color='red', linewidth=2, label='Isoquante 1')
-            if show_eq2:
-                L_start2 = max(0.01, min(0.1, L_eq2 / 2))
-                L_v2 = np.linspace(L_start2, cost2 / w2 * 1.3, 400)
-                with np.errstate(divide='ignore', invalid='ignore'):
-                    K_v2 = (Q_eq2 / (L_v2 * alpha_p)) * (1 / beta_p)
-                mask2 = np.isfinite(K_v2) & (K_v2 > 0)
-                ax_c.plot(L_v2[mask2], K_v2[mask2], color='purple', linestyle='--', linewidth=2, label='Isoquante 2')
+            L_vals2 = np.linspace(0.1, cost2/w2 + 5, 400)
+            K_vals2 = (Q_eq2 / (L_vals2**alpha_prod))**(1/beta_prod)
+            mask2 = (K_vals2 > 0) & (K_vals2 < cost2/r2 + 5)
+            ax.plot(L_vals2[mask2], K_vals2[mask2], color='purple', linewidth=2, linestyle='--', label='Isoquante 2')
 
-        if show_eq_pt:
-            ax_c.scatter(L_eq, K_eq, color='green', s=150, zorder=5, edgecolor='black', label=f'E1 (L={L_eq:.1f}, K={K_eq:.1f})')
-            if show_eq2:
-                ax_c.scatter(L_eq2, K_eq2, color='darkorange', s=150, zorder=5, edgecolor='black', label=f'E2 (L={L_eq2:.1f}, K={K_eq2:.1f})')
+        if show_eq_prod:
+            ax.scatter(L_eq2, K_eq2, color='darkorange', s=100, zorder=5, label=f'Équilibre 2 (L={L_eq2:.1f}, K={K_eq2:.1f})')
 
-        setup_ax_prod(ax_c, "Vue combinée — Équilibre du Producteur")
-        ax_c.legend(loc='upper right', fontsize=8, ncol=2 if show_eq2 else 1)
-        st.pyplot(fig_c)
-        plt.close(fig_c)
-
-    # ======================================
-    # RÉSULTATS
-    # ======================================
-    st.subheader("📌 Résultats — Équilibre 1")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("L* (Travail)", f"{L_eq:.2f}")
-    c2.metric("K* (Capital)", f"{K_eq:.2f}")
-    c3.metric("Q* (Production)", f"{Q_eq:.3f}")
-
-    if show_eq2:
-        st.subheader("📌 Résultats — Équilibre 2")
-        c1, c2, c3 = st.columns(3)
-        c1.metric("L*₂", f"{L_eq2:.2f}", delta=f"{L_eq2 - L_eq:+.2f}")
-        c2.metric("K*₂", f"{K_eq2:.2f}", delta=f"{K_eq2 - K_eq:+.2f}")
-        c3.metric("Q*₂", f"{Q_eq2:.3f}", delta=f"{Q_eq2 - Q_eq:+.3f}")
-
-    st.info(
-        "💡 *Condition d'optimalité (Cobb-Douglas)* : à l'équilibre, le TMST égale le rapport des prix des facteurs.\n\n"
-        f"*L\\ = α · C/w = {alpha_p:.1f} × {cost}/{w} = {L_eq:.2f}**  \n"
-        f"*K\\ = (1−α) · C/r = {beta_p:.1f} × {cost}/{r} = {K_eq:.2f}**"
-    )
-
-    with st.expander("📖 Voir les formules utilisées"):
-        st.latex(r"Q(L,K) = L^\alpha \, K^\beta, \quad \beta = 1-\alpha")
-        st.latex(r"L^* = \frac{\alpha}{\alpha+\beta} \cdot \frac{C}{w}")
-        st.latex(r"K^* = \frac{\beta}{\alpha+\beta} \cdot \frac{C}{r}")
-        st.latex(r"Q^* = (L^*)^\alpha \, (K^*)^\beta")
-
-# ==========================================
-# FOOTER COMMUN
-# ==========================================
-st.markdown("---")
-st.caption("© 2026 — Pr. RIAHI · Outil pédagogique de microéconomie · Modèle Cobb-Douglas")
+    ax.set_xlabel('Travail (L)')
+    ax.set_ylabel('Capital (K)')
+    
+    max_L = max(cost/w, cost2/w2) + 5 if show_eq2_prod else cost/w + 5
+    max_K = max(cost/r, cost2/r2) + 5 if show_eq2_prod else cost/r + 5
+    ax.set_xlim(0, max_L)
+    ax.set_ylim(0, max_K)
+    
+    ax.legend()
+    ax.grid(True, linestyle=':', alpha=0.6)
+    st.pyplot(fig)
