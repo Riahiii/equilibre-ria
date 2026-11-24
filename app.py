@@ -12,20 +12,6 @@ st.set_page_config(
 # --- MENU DANS LA BARRE LATÉRALE ---
 st.sidebar.title("Navigation")
 mode = st.sidebar.radio("Choisissez le mode :", ["Consommateur", "Producteur"], key="choix_mode")
-import streamlit as st
-import numpy as np
-import matplotlib.pyplot as plt
-
-# --- CONFIGURATION DE LA PAGE ---
-st.set_page_config(
-    page_title="Économie Micro — RIAHI", 
-    page_icon="📊",
-    layout="wide"
-)
-
-# --- MENU DANS LA BARRE LATÉRALE ---
-st.sidebar.title("Navigation")
-mode = st.sidebar.radio("Choisissez le mode :", ["Consommateur", "Producteur"])
 
 # ==========================================
 # MODE CONSOMMATEUR
