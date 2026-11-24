@@ -195,4 +195,4 @@ else:
     
     ax.legend()
     ax.grid(True, linestyle=':', alpha=0.6)
-    st.pyplot(fig
+    st.pyplot(fig)
